@@ -40,6 +40,12 @@ Visit the printed localhost port (Vite default `5173`).
 - `src/config.ts` — API base URL toggle.
 - `src/App.css` / `src/index.css` — Styling and typing indicator.
 
+## DEMO
+https://drive.google.com/file/d/1SwE5udZZ7LYy9rqrhyvIjGNQTArvgOhV/view?usp=sharing
+
+## Code Walkthrough
+https://drive.google.com/file/d/1NNx6Om_ctVYRbsy2q12g3J3RaciOcv_c/view?usp=sharing
+
 ## API Endpoints Used
 - `POST /api/chat` — Send user query and get bot response.
 - `GET /api/history/:sessionId` — Load prior turns for an existing session.
