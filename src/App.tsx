@@ -55,7 +55,11 @@ function App() {
     })
     .then((response) => {
       let history = JSON.parse(response.data.history);
-      setMessages(history);
+      if (history && history.length > 0) {
+        setMessages(history);
+      } else {
+        setMessages(buildInitialMessages());
+      }
     })
     .catch((err) => {
       console.log(err);
