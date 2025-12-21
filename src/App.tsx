@@ -2,6 +2,8 @@
 import { type FormEvent, useEffect, useRef, useState } from 'react'
 import axios from 'axios';
 import BASE_URL from './config';
+import ReactMarkdown from "react-markdown";
+import { set } from 'zod';
 
 type Sender = 'user' | 'bot'
 
@@ -27,6 +29,7 @@ function App() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  const [isInitialLoading, setIsInitialLoading] = useState(true)
   const messagesEndRef = useRef<HTMLDivElement | null>(null)
   const botTimerRef = useRef<number | null>(null)
 
@@ -43,8 +46,10 @@ function App() {
   }, [])
 
   useEffect(() => {
+    setIsInitialLoading(true)
     if (!localStorage.getItem('sessionId')) {
-      setMessages(buildInitialMessages);
+      setMessages(buildInitialMessages());
+      setIsInitialLoading(false)
       return;
     }
     axios({
@@ -64,12 +69,17 @@ function App() {
     .catch((err) => {
       console.log(err);
     })
+    .finally(() => {
+      setIsInitialLoading(false)
+    })
   }, []);
 
   const handleResetSession = () => {
     if (botTimerRef.current) {
       window.clearTimeout(botTimerRef.current)
     }
+
+    setIsInitialLoading(true)
 
     axios({
       url: `${BASE_URL}/api/session/${localStorage.getItem("sessionId")}`,
@@ -79,7 +89,7 @@ function App() {
       }
     })
     .then((response) => {
-      console.log(response);
+      // console.log(response);
       setMessages(buildInitialMessages());
       localStorage.removeItem("sessionId");
     })
@@ -89,7 +99,8 @@ function App() {
 
 
     setInputValue('')
-    setIsLoading(false)
+    setIsLoading(false);
+    setIsInitialLoading(false)
   }
 
   const addBotMessage = (prompt: string) => {
@@ -168,44 +179,65 @@ function App() {
         </header>
 
         <section className="mt-4 flex flex-1 min-h-0 flex-col">
-          <div className="flex flex-1 min-h-0 flex-col rounded-3xl bg-slate-900/60 p-4 shadow-[0_25px_80px_rgba(15,23,42,0.7)] ring-1 ring-slate-800">
+          <div className="relative flex flex-1 min-h-0 flex-col rounded-3xl bg-slate-900/60 p-4 shadow-[0_25px_80px_rgba(15,23,42,0.7)] ring-1 ring-slate-800">
             <div className="scrollbar-thin flex-1 space-y-4 overflow-y-auto px-1 min-h-0">
-              {messages.map((message) => {
-                const isUser = message.sender === 'user'
-                return (
-                  <div
-                    key={message.id}
-                    className={`flex flex-col ${isUser ? 'items-end' : 'items-start'}`}
-                  >
-                    <div
-                      className={`max-w-full whitespace-pre-wrap break-words rounded-2xl px-4 py-3 text-sm leading-relaxed shadow-lg md:max-w-[75%] ${
-                        isUser
-                          ? 'bg-gradient-to-br from-indigo-500 via-indigo-400 to-indigo-500 text-white'
-                          : 'bg-slate-800 text-slate-100'
-                      }`}
-                    >
-                      {message.text}
-                    </div>
-                    <span className="mt-1 text-xs uppercase tracking-wide text-slate-500">
-                      {message.timestamp}
-                    </span>
-                  </div>
-                )
-              })}
-              {isLoading && (
-                <div className="flex flex-col items-start">
-                  <div className="flex items-center gap-2 rounded-2xl bg-slate-800 px-4 py-3 text-xs text-slate-300 shadow-lg">
-                    <span className="typing-dot" />
-                    <span className="typing-dot" />
-                    <span className="typing-dot" />
-                  </div>
-                  <span className="mt-1 text-xs uppercase tracking-wide text-slate-500">
-                    Thinking...
-                  </span>
+              {isInitialLoading ? (
+                <div className="space-y-4 p-4">
+                  <div className="animate-pulse max-w-[60%] rounded-2xl bg-slate-800 h-6" />
+                  <div className="animate-pulse max-w-[40%] rounded-2xl bg-slate-800 h-6" />
+                  <div className="animate-pulse max-w-[50%] rounded-2xl bg-slate-800 h-6" />
                 </div>
+              ) : (
+                <>
+                  {messages.map((message) => {
+                    const isUser = message.sender === 'user'
+                    return (
+                      <div
+                        key={message.id}
+                        className={`flex flex-col ${isUser ? 'items-end' : 'items-start'}`}
+                      >
+                        <section
+                          className={`max-w-full whitespace-pre-wrap break-words rounded-2xl px-4 py-3 text-sm leading-relaxed shadow-lg md:max-w-[75%] ${
+                            isUser
+                              ? 'bg-gradient-to-br from-indigo-500 via-indigo-400 to-indigo-500 text-white'
+                              : 'bg-slate-800 text-slate-100'
+                          }`}
+                        >
+                          <ReactMarkdown>
+                            {message.text}
+                          </ReactMarkdown>
+                        </section>
+                        <span className="mt-1 text-xs uppercase tracking-wide text-slate-500">
+                          {message.timestamp}
+                        </span>
+                      </div>
+                    )
+                  })}
+                  {isLoading && (
+                    <div className="flex flex-col items-start">
+                      <div className="flex items-center gap-2 rounded-2xl bg-slate-800 px-4 py-3 text-xs text-slate-300 shadow-lg">
+                        <span className="typing-dot" />
+                        <span className="typing-dot" />
+                        <span className="typing-dot" />
+                      </div>
+                      <span className="mt-1 text-xs uppercase tracking-wide text-slate-500">
+                        Thinking...
+                      </span>
+                    </div>
+                  )}
+                </>
               )}
               <div ref={messagesEndRef} />
             </div>
+
+            {isInitialLoading && (
+              <div className="absolute inset-0 flex items-center justify-center rounded-3xl bg-slate-900/60" role="status" aria-live="polite">
+                <div className="flex flex-col items-center gap-2">
+                  <div className="h-12 w-12 animate-spin rounded-full border-4 border-t-indigo-500 border-slate-600" />
+                  <span className="text-sm text-slate-400">Loading…</span>
+                </div>
+              </div>
+            )}
 
             <form
               onSubmit={handleSendMessage}
@@ -217,15 +249,16 @@ function App() {
                   name="message"
                   autoComplete="off"
                   autoFocus
-                  placeholder="Type a message..."
+                  placeholder={isInitialLoading ? "Loading..." : "Type a message..."}
                   value={inputValue}
                   onChange={(event) => setInputValue(event.target.value)}
-                  className="flex-1 rounded-2xl border border-slate-800 bg-slate-900/50 px-4 py-3 text-sm text-slate-100 placeholder:text-slate-500 shadow-inner focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/40"
+                  disabled={isInitialLoading || isLoading}
+                  className="flex-1 rounded-2xl border border-slate-800 bg-slate-900/50 px-4 py-3 text-sm text-slate-100 placeholder:text-slate-500 shadow-inner focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 disabled:cursor-not-allowed disabled:opacity-60"
                 />
 
                 <button
                   type="submit"
-                  disabled={!inputValue.trim()}
+                  disabled={!inputValue.trim() || isInitialLoading}
                   className="rounded-2xl bg-indigo-500 px-5 py-3 text-sm font-semibold text-white transition hover:bg-indigo-400 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   Send

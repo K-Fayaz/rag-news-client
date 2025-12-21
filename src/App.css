@@ -66,3 +66,40 @@ body {
     opacity: 1;
   }
 }
+
+.markdown-content {
+  .chat-h1 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin: 16px 0 8px 0;
+    color: #333;
+  }
+  
+  .chat-h2 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin: 12px 0 6px 0;
+    color: #555;
+  }
+  
+  .chat-bold {
+    font-weight: 600;
+    color: #000;
+  }
+  
+  .chat-paragraph {
+    margin: 8px 0;
+    line-height: 1.6;
+  }
+  
+  .citation-link {
+    color: #1a73e8;
+    text-decoration: none;
+    font-size: 0.85em;
+    vertical-align: super;
+    
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+}
