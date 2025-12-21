@@ -32,6 +32,8 @@ function App() {
   const [isInitialLoading, setIsInitialLoading] = useState(true)
   const messagesEndRef = useRef<HTMLDivElement | null>(null)
   const botTimerRef = useRef<number | null>(null)
+  const wakeTimerRef = useRef<number | null>(null)
+  const [showWakeTooltip, setShowWakeTooltip] = useState(false)
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -42,16 +44,34 @@ function App() {
       if (botTimerRef.current) {
         window.clearTimeout(botTimerRef.current)
       }
+      if (wakeTimerRef.current) {
+        window.clearTimeout(wakeTimerRef.current)
+      }
     }
   }, [])
 
-  useEffect(() => {
+  const fetchHistory = () => {
     setIsInitialLoading(true)
+    setShowWakeTooltip(false)
+
+    if (wakeTimerRef.current) {
+      window.clearTimeout(wakeTimerRef.current)
+    }
+
+    wakeTimerRef.current = window.setTimeout(() => {
+      setShowWakeTooltip(true)
+    }, 7000)
+
     if (!localStorage.getItem('sessionId')) {
       setMessages(buildInitialMessages());
       setIsInitialLoading(false)
+      if (wakeTimerRef.current) {
+        window.clearTimeout(wakeTimerRef.current)
+      }
+      setShowWakeTooltip(false)
       return;
     }
+
     axios({
       url: `${BASE_URL}/api/history/${localStorage.getItem('sessionId')}`,
       headers: {
@@ -71,7 +91,15 @@ function App() {
     })
     .finally(() => {
       setIsInitialLoading(false)
+      if (wakeTimerRef.current) {
+        window.clearTimeout(wakeTimerRef.current)
+      }
+      setShowWakeTooltip(false)
     })
+  }
+
+  useEffect(() => {
+    fetchHistory()
   }, []);
 
   const handleResetSession = () => {
@@ -80,6 +108,10 @@ function App() {
     }
 
     setIsInitialLoading(true)
+    setShowWakeTooltip(false)
+    if (wakeTimerRef.current) {
+      window.clearTimeout(wakeTimerRef.current)
+    }
 
     axios({
       url: `${BASE_URL}/api/session/${localStorage.getItem("sessionId")}`,
@@ -235,6 +267,14 @@ function App() {
                 <div className="flex flex-col items-center gap-2">
                   <div className="h-12 w-12 animate-spin rounded-full border-4 border-t-indigo-500 border-slate-600" />
                   <span className="text-sm text-slate-400">Loading…</span>
+
+                  {showWakeTooltip && (
+                    <div className="mt-3 flex items-center">
+                      <div className="max-w-xs rounded-md bg-slate-800/80 px-3 py-2 text-sm text-slate-200 text-center">
+                        It looks like the server is waking up after inactivity — this can take a few seconds. Thanks for your patience.
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
