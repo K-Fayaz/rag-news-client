@@ -1,5 +1,8 @@
 # AI News Assistant – Client
 
+#LIVE
+https://rag-news-client.vercel.app/
+
 React + TypeScript frontend for the RAG-backed news assistant. Provides a chat
 UI, persists session IDs locally, and talks to the backend for answers.
 
